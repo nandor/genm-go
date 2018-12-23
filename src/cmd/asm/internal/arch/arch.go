@@ -61,6 +61,8 @@ func Set(GOARCH string) *Arch {
 		return archArm()
 	case "arm64":
 		return archArm64()
+	case "genm":
+		return archGenM()
 	case "mips":
 		a := archMips()
 		a.LinkArch = &mips.Linkmips
@@ -421,6 +423,10 @@ func archPPC64() *Arch {
 		RegisterNumber: ppc64RegisterNumber,
 		IsJump:         jumpPPC64,
 	}
+}
+
+func archGenM() *Arch {
+	panic("archGenM")
 }
 
 func archMips() *Arch {

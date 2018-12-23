@@ -9,6 +9,7 @@ import (
 	"cmd/compile/internal/arm"
 	"cmd/compile/internal/arm64"
 	"cmd/compile/internal/gc"
+	"cmd/compile/internal/genm"
 	"cmd/compile/internal/mips"
 	"cmd/compile/internal/mips64"
 	"cmd/compile/internal/ppc64"
@@ -27,6 +28,7 @@ var archInits = map[string]func(*gc.Arch){
 	"amd64p32": amd64.Init,
 	"arm":      arm.Init,
 	"arm64":    arm64.Init,
+	"genm": 		genm.Init,
 	"mips":     mips.Init,
 	"mipsle":   mips.Init,
 	"mips64":   mips64.Init,

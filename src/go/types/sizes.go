@@ -161,6 +161,7 @@ var gcArchSizes = map[string]*StdSizes{
 	"arm64":    {8, 8},
 	"amd64":    {8, 8},
 	"amd64p32": {4, 8},
+	"genm": 		{8, 8},
 	"mips":     {4, 4},
 	"mipsle":   {4, 4},
 	"mips64":   {8, 8},

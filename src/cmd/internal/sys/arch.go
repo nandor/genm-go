@@ -16,6 +16,7 @@ const (
 	AMD64
 	ARM
 	ARM64
+	GenM
 	I386
 	MIPS
 	MIPS64
@@ -98,6 +99,15 @@ var ArchARM64 = &Arch{
 	MinLC:     4,
 }
 
+var ArchGenM = &Arch{
+	Name:      "genm",
+	Family:    GenM,
+	ByteOrder: binary.LittleEndian,
+	PtrSize:   8,
+	RegSize:   8,
+	MinLC:     1,
+}
+
 var ArchMIPS = &Arch{
 	Name:      "mips",
 	Family:    MIPS,
@@ -176,6 +186,7 @@ var Archs = [...]*Arch{
 	ArchAMD64P32,
 	ArchARM,
 	ArchARM64,
+	ArchGenM,
 	ArchMIPS,
 	ArchMIPSLE,
 	ArchMIPS64,
