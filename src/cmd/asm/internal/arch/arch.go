@@ -9,6 +9,7 @@ import (
 	"cmd/internal/obj"
 	"cmd/internal/obj/arm"
 	"cmd/internal/obj/arm64"
+	"cmd/internal/obj/genm"
 	"cmd/internal/obj/mips"
 	"cmd/internal/obj/ppc64"
 	"cmd/internal/obj/s390x"
@@ -426,7 +427,24 @@ func archPPC64() *Arch {
 }
 
 func archGenM() *Arch {
-	panic("archGenM")
+	instructions := make(map[string]obj.As)
+	for i, s := range obj.Anames {
+		instructions[s] = obj.As(i)
+	}
+	for i, s := range genm.Anames {
+		if obj.As(i) >= obj.A_ARCHSPECIFIC {
+			instructions[s] = obj.As(i) + obj.ABaseWasm
+		}
+	}
+
+	return &Arch{
+		LinkArch:       &genm.LinkGenM,
+		Instructions:   instructions,
+		Register:       genm.Register,
+		RegisterPrefix: nil,
+		RegisterNumber: nilRegisterNumber,
+		IsJump:         jumpGenM,
+	}
 }
 
 func archMips() *Arch {

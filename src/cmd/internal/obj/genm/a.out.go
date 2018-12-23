@@ -6,7 +6,7 @@ package genm
 
 import "cmd/internal/obj"
 
-//go:generate go run ../stringer.go -i $GOFILE -o anames.go -p wasm
+//go:generate go run ../stringer.go -i $GOFILE -o anames.go -p genm
 
 const (
 	SET = obj.ABaseGenM + obj.A_ARCHSPECIFIC + iota

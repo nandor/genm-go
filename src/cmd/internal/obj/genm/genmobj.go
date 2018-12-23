@@ -9,6 +9,8 @@ import (
 	"cmd/internal/sys"
 )
 
+var Register = map[string]int16{
+}
 
 var unaryDst = map[obj.As]bool{
 }
@@ -23,7 +25,6 @@ var LinkGenM = obj.LinkArch{
 }
 
 func instinit(ctxt *obj.Link) {
-	panic("instinit")
 }
 
 func preprocess(ctxt *obj.Link, s *obj.LSym, newprog obj.ProgAlloc) {
