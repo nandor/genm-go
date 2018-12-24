@@ -5814,7 +5814,7 @@ func (e *ssafn) Line(pos src.XPos) string {
 
 // Log logs a message from the compiler.
 func (e *ssafn) Logf(msg string, args ...interface{}) {
-	if e.log {
+	if e.log || os.Getenv("GENM_DUMP") != "" {
 		fmt.Printf(msg, args...)
 	}
 }

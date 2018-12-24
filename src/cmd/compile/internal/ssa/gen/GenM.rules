@@ -1,0 +1,59 @@
+// Copyright 2016 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// Lowering calls
+(StaticCall [argwid] {target} mem) -> (LoweredStaticCall [argwid] {target} mem)
+(InterCall [argwid] entry mem) -> (LoweredInterCall [argwid] entry mem)
+(WB {fn} destptr srcptr mem) -> (LoweredWB {fn} destptr srcptr mem)
+
+// Lowering misc
+(OffPtr [off] ptr) -> (ADD_I64 (CONST_I64 [off]) ptr)
+(Addr {sym} base) -> (LoweredAddr {sym} base)
+(LocalAddr {sym} base _) -> (LoweredAddr {sym} base)
+(NilCheck ptr mem) -> (LoweredNilCheck ptr mem)
+
+// Lowering constants
+(Const8  [val]) -> (CONST_I8  [val])
+(Const16 [val]) -> (CONST_I16 [val])
+(Const32 [val]) -> (CONST_I32 [val])
+(Const64 [val]) -> (CONST_I64 [val])
+
+// Lowering arithmetic
+(Add64 x y) -> (ADD_I64 x y)
+
+// Lowering comparisons
+(Neq32  x y) -> (CMP_NE_I64 x y)
+
+(Eq8 x y) -> (CMP_EQ_I8 x y)
+
+(Greater64  x y) -> (CMP_LT_I64  x y)
+(Greater32  x y) -> (CMP_LT_I32  x y)
+(Greater16  x y) -> (CMP_LT_I16  x y)
+(Greater8   x y) -> (CMP_LT_I8   x y)
+(Greater64U x y) -> (CMP_ULT_I64 x y)
+(Greater32U x y) -> (CMP_ULT_I32 x y)
+(Greater16U x y) -> (CMP_ULT_I16 x y)
+(Greater8U  x y) -> (CMP_ULT_I8  x y)
+(Greater64F x y) -> (CMP_OLT_F64 x y)
+(Greater32F x y) -> (CMP_OLT_F32 x y)
+
+// Lowering loads
+(Load <t> ptr mem) && is32BitFloat(t) -> (LD_4_F32 ptr mem)
+(Load <t> ptr mem) && is64BitFloat(t) -> (LD_8_F64 ptr mem)
+(Load <t> ptr mem) && t.Size() == 8 && !t.IsSigned() -> (LD_8_U64 ptr mem)
+(Load <t> ptr mem) && t.Size() == 8 &&  t.IsSigned() -> (LD_8_I64 ptr mem)
+(Load <t> ptr mem) && t.Size() == 4 && !t.IsSigned() -> (LD_4_U32 ptr mem)
+(Load <t> ptr mem) && t.Size() == 4 &&  t.IsSigned() -> (LD_4_I32 ptr mem)
+(Load <t> ptr mem) && t.Size() == 2 && !t.IsSigned() -> (LD_2_U16 ptr mem)
+(Load <t> ptr mem) && t.Size() == 2 &&  t.IsSigned() -> (LD_2_I16 ptr mem)
+(Load <t> ptr mem) && t.Size() == 1 && !t.IsSigned() -> (LD_1_U8  ptr mem)
+(Load <t> ptr mem) && t.Size() == 1 &&  t.IsSigned() -> (LD_1_I8  ptr mem)
+
+// Lowering stores
+(Store {t} ptr val mem) && is64BitFloat(t.(*types.Type)) -> (ST_8_F ptr val mem)
+(Store {t} ptr val mem) && is32BitFloat(t.(*types.Type)) -> (ST_4_F ptr val mem)
+(Store {t} ptr val mem) && t.(*types.Type).Size() == 8   -> (ST_8_I ptr val mem)
+(Store {t} ptr val mem) && t.(*types.Type).Size() == 4   -> (ST_4_I ptr val mem)
+(Store {t} ptr val mem) && t.(*types.Type).Size() == 2   -> (ST_2_I ptr val mem)
+(Store {t} ptr val mem) && t.(*types.Type).Size() == 1   -> (ST_1_I ptr val mem)

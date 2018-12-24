@@ -6,6 +6,7 @@ import (
 	"cmd/internal/obj"
 	"cmd/internal/obj/arm"
 	"cmd/internal/obj/arm64"
+	"cmd/internal/obj/genm"
 	"cmd/internal/obj/mips"
 	"cmd/internal/obj/ppc64"
 	"cmd/internal/obj/s390x"
@@ -1388,6 +1389,45 @@ const (
 	OpARM64LoweredAtomicAnd8
 	OpARM64LoweredAtomicOr8
 	OpARM64LoweredWB
+
+	OpGenMLoweredStaticCall
+	OpGenMLoweredInterCall
+	OpGenMLoweredNilCheck
+	OpGenMLoweredAddr
+	OpGenMLoweredWB
+	OpGenMCONST_I8
+	OpGenMCONST_I16
+	OpGenMCONST_I32
+	OpGenMCONST_I64
+	OpGenMADD_I64
+	OpGenMCMP_NE_I64
+	OpGenMCMP_EQ_I8
+	OpGenMCMP_LT_I64
+	OpGenMCMP_LT_I32
+	OpGenMCMP_LT_I16
+	OpGenMCMP_LT_I8
+	OpGenMCMP_ULT_I64
+	OpGenMCMP_ULT_I32
+	OpGenMCMP_ULT_I16
+	OpGenMCMP_ULT_I8
+	OpGenMCMP_OLT_F64
+	OpGenMCMP_OLT_F32
+	OpGenMLD_8_U64
+	OpGenMLD_8_I64
+	OpGenMLD_4_U32
+	OpGenMLD_4_I32
+	OpGenMLD_2_U16
+	OpGenMLD_2_I16
+	OpGenMLD_1_U8
+	OpGenMLD_1_I8
+	OpGenMLD_4_F32
+	OpGenMLD_8_F64
+	OpGenMST_8_I
+	OpGenMST_4_I
+	OpGenMST_2_I
+	OpGenMST_1_I
+	OpGenMST_8_F
+	OpGenMST_4_F
 
 	OpMIPSADD
 	OpMIPSADDconst
@@ -18473,6 +18513,506 @@ var opcodeTable = [...]opInfo{
 	},
 
 	{
+		name:      "LoweredStaticCall",
+		auxType:   auxSymOff,
+		argLen:    1,
+		call:      true,
+		symEffect: SymNone,
+		reg:       regInfo{},
+	},
+	{
+		name:    "LoweredInterCall",
+		auxType: auxInt64,
+		argLen:  2,
+		call:    true,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:           "LoweredNilCheck",
+		argLen:         2,
+		nilCheck:       true,
+		faultOnNilArg0: true,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:              "LoweredAddr",
+		auxType:           auxSymOff,
+		argLen:            1,
+		rematerializeable: true,
+		symEffect:         SymAddr,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:      "LoweredWB",
+		auxType:   auxSym,
+		argLen:    3,
+		symEffect: SymNone,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:              "CONST_I8",
+		auxType:           auxInt8,
+		argLen:            0,
+		rematerializeable: true,
+		asm:               genm.ACONST,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:              "CONST_I16",
+		auxType:           auxInt16,
+		argLen:            0,
+		rematerializeable: true,
+		asm:               genm.ACONST,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:              "CONST_I32",
+		auxType:           auxInt32,
+		argLen:            0,
+		rematerializeable: true,
+		asm:               genm.ACONST,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:              "CONST_I64",
+		auxType:           auxInt64,
+		argLen:            0,
+		rematerializeable: true,
+		asm:               genm.ACONST,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "ADD_I64",
+		argLen: 2,
+		asm:    genm.AADD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_NE_I64",
+		argLen: 2,
+		asm:    genm.ACMP_NE,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_EQ_I8",
+		argLen: 2,
+		asm:    genm.ACMP_EQ,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_LT_I64",
+		argLen: 2,
+		asm:    genm.ACMP_LT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_LT_I32",
+		argLen: 2,
+		asm:    genm.ACMP_LT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_LT_I16",
+		argLen: 2,
+		asm:    genm.ACMP_LT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_LT_I8",
+		argLen: 2,
+		asm:    genm.ACMP_LT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_ULT_I64",
+		argLen: 2,
+		asm:    genm.ACMP_ULT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_ULT_I32",
+		argLen: 2,
+		asm:    genm.ACMP_ULT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_ULT_I16",
+		argLen: 2,
+		asm:    genm.ACMP_ULT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_ULT_I8",
+		argLen: 2,
+		asm:    genm.ACMP_ULT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_OLT_F64",
+		argLen: 2,
+		asm:    genm.ACMP_OLT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_OLT_F32",
+		argLen: 2,
+		asm:    genm.ACMP_OLT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:    "LD_8_U64",
+		auxType: auxInt64,
+		argLen:  2,
+		asm:     genm.ALD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:    "LD_8_I64",
+		auxType: auxInt64,
+		argLen:  2,
+		asm:     genm.ALD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:    "LD_4_U32",
+		auxType: auxInt64,
+		argLen:  2,
+		asm:     genm.ALD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:    "LD_4_I32",
+		auxType: auxInt64,
+		argLen:  2,
+		asm:     genm.ALD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:    "LD_2_U16",
+		auxType: auxInt64,
+		argLen:  2,
+		asm:     genm.ALD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:    "LD_2_I16",
+		auxType: auxInt64,
+		argLen:  2,
+		asm:     genm.ALD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:    "LD_1_U8",
+		auxType: auxInt64,
+		argLen:  2,
+		asm:     genm.ALD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:    "LD_1_I8",
+		auxType: auxInt64,
+		argLen:  2,
+		asm:     genm.ALD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:    "LD_4_F32",
+		auxType: auxInt64,
+		argLen:  2,
+		asm:     genm.ALD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 4294901760}, // F0 F1 F2 F3 F4 F5 F6 F7 F8 F9 FA FB FC FD FE FF
+			},
+		},
+	},
+	{
+		name:    "LD_8_F64",
+		auxType: auxInt64,
+		argLen:  2,
+		asm:     genm.ALD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 4294901760}, // F0 F1 F2 F3 F4 F5 F6 F7 F8 F9 FA FB FC FD FE FF
+			},
+		},
+	},
+	{
+		name:    "ST_8_I",
+		auxType: auxInt64,
+		argLen:  3,
+		asm:     genm.AST_8,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:    "ST_4_I",
+		auxType: auxInt64,
+		argLen:  3,
+		asm:     genm.AST_4,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:    "ST_2_I",
+		auxType: auxInt64,
+		argLen:  3,
+		asm:     genm.AST_2,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:    "ST_1_I",
+		auxType: auxInt64,
+		argLen:  3,
+		asm:     genm.AST_1,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:    "ST_8_F",
+		auxType: auxInt64,
+		argLen:  3,
+		asm:     genm.AST_8,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535},      // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 4294901760}, // F0 F1 F2 F3 F4 F5 F6 F7 F8 F9 FA FB FC FD FE FF
+			},
+		},
+	},
+	{
+		name:    "ST_4_F",
+		auxType: auxInt64,
+		argLen:  3,
+		asm:     genm.AST_4,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535},      // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 4294901760}, // F0 F1 F2 F3 F4 F5 F6 F7 F8 F9 FA FB FC FD FE FF
+			},
+		},
+	},
+
+	{
 		name:        "ADD",
 		argLen:      2,
 		commutative: true,
@@ -30211,6 +30751,47 @@ var fpRegMaskARM64 = regMask(9223372034707292160)
 var specialRegMaskARM64 = regMask(0)
 var framepointerRegARM64 = int8(-1)
 var linkRegARM64 = int8(29)
+var registersGenM = [...]Register{
+	{0, genm.REG_R0, 0, "R0"},
+	{1, genm.REG_R1, 1, "R1"},
+	{2, genm.REG_R2, 2, "R2"},
+	{3, genm.REG_R3, 3, "R3"},
+	{4, genm.REG_R4, 4, "R4"},
+	{5, genm.REG_R5, 5, "R5"},
+	{6, genm.REG_R6, 6, "R6"},
+	{7, genm.REG_R7, 7, "R7"},
+	{8, genm.REG_R8, 8, "R8"},
+	{9, genm.REG_R9, 9, "R9"},
+	{10, genm.REG_RA, 10, "RA"},
+	{11, genm.REG_RB, 11, "RB"},
+	{12, genm.REG_RC, 12, "RC"},
+	{13, genm.REG_RD, 13, "RD"},
+	{14, genm.REG_RE, 14, "RE"},
+	{15, genm.REG_RF, 15, "RF"},
+	{16, genm.REG_F0, -1, "F0"},
+	{17, genm.REG_F1, -1, "F1"},
+	{18, genm.REG_F2, -1, "F2"},
+	{19, genm.REG_F3, -1, "F3"},
+	{20, genm.REG_F4, -1, "F4"},
+	{21, genm.REG_F5, -1, "F5"},
+	{22, genm.REG_F6, -1, "F6"},
+	{23, genm.REG_F7, -1, "F7"},
+	{24, genm.REG_F8, -1, "F8"},
+	{25, genm.REG_F9, -1, "F9"},
+	{26, genm.REG_FA, -1, "FA"},
+	{27, genm.REG_FB, -1, "FB"},
+	{28, genm.REG_FC, -1, "FC"},
+	{29, genm.REG_FD, -1, "FD"},
+	{30, genm.REG_FE, -1, "FE"},
+	{31, genm.REG_FF, -1, "FF"},
+	{32, genm.REGSP, -1, "SP"},
+	{33, 0, -1, "SB"},
+}
+var gpRegMaskGenM = regMask(65535)
+var fpRegMaskGenM = regMask(4294901760)
+var specialRegMaskGenM = regMask(0)
+var framepointerRegGenM = int8(-1)
+var linkRegGenM = int8(-1)
 var registersMIPS = [...]Register{
 	{0, mips.REG_R0, -1, "R0"},
 	{1, mips.REG_R1, 0, "R1"},

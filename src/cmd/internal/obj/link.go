@@ -239,6 +239,24 @@ const (
 	TYPE_REGLIST
 )
 
+type GenMType uint8
+
+const (
+	TYPE_VOID GenMType = iota
+	TYPE_I1
+	TYPE_U1
+	TYPE_I8
+	TYPE_U8
+	TYPE_I16
+	TYPE_U16
+	TYPE_I32
+	TYPE_U32
+	TYPE_I64
+	TYPE_U64
+	TYPE_F32
+	TYPE_F64
+)
+
 // Prog describes a single machine instruction.
 //
 // The general instruction form is:
@@ -292,6 +310,8 @@ type Prog struct {
 	Ft       uint8    // for x86 back end: type index of Prog.From
 	Tt       uint8    // for x86 back end: type index of Prog.To
 	Isize    uint8    // for x86 back end: size of the instruction in bytes
+	Ty 			 GenMType // for GenM back end: type of the result
+	Size 		 uint8 		// for GenM back end: size of the operation
 }
 
 // From3Type returns p.GetFrom3().Type, or TYPE_NONE when
