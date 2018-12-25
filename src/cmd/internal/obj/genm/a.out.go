@@ -10,6 +10,9 @@ import "cmd/internal/obj"
 
 const (
 	ACALL = obj.ABaseGenM + obj.A_ARCHSPECIFIC + iota
+
+	ASELECT
+
   ACONST
   AADDR
   ACOPY
@@ -18,7 +21,11 @@ const (
   AST_2
   AST_4
   AST_8
+
 	AADD
+	AAND
+	ASLL
+	ASLR
 
   ACMP_NE
 
@@ -27,6 +34,14 @@ const (
   ACMP_LT
   ACMP_ULT
   ACMP_OLT
+
+  ACMP_GT
+  ACMP_UGT
+  ACMP_OGT
+
+  AJT
+
+  ARET
 
   AARG
 )

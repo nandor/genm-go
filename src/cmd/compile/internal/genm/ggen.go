@@ -7,10 +7,11 @@ package genm
 import (
 	"cmd/compile/internal/gc"
 	"cmd/internal/obj"
+	"log"
 )
 
 func zerorange(pp *gc.Progs, p *obj.Prog, off, cnt int64, state *uint32) *obj.Prog {
-	panic("zerorange")
+	log.Printf("zerorange: not implemented")
 	return p
 }
 

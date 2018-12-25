@@ -1395,11 +1395,24 @@ const (
 	OpGenMLoweredNilCheck
 	OpGenMLoweredAddr
 	OpGenMLoweredWB
+	OpGenMSELECT_I64
+	OpGenMCONST_I1
 	OpGenMCONST_I8
 	OpGenMCONST_I16
 	OpGenMCONST_I32
 	OpGenMCONST_I64
 	OpGenMADD_I64
+	OpGenMAND_I64
+	OpGenMOR_I64
+	OpGenMSLR_I64
+	OpGenMSLR_I32
+	OpGenMSLR_I16
+	OpGenMSLR_I8
+	OpGenMSLL_I64
+	OpGenMSLL_I32
+	OpGenMSLL_I16
+	OpGenMSLL_I8
+	OpGenMCMP_NE_I32
 	OpGenMCMP_NE_I64
 	OpGenMCMP_EQ_I8
 	OpGenMCMP_LT_I64
@@ -1412,6 +1425,16 @@ const (
 	OpGenMCMP_ULT_I8
 	OpGenMCMP_OLT_F64
 	OpGenMCMP_OLT_F32
+	OpGenMCMP_GT_I64
+	OpGenMCMP_GT_I32
+	OpGenMCMP_GT_I16
+	OpGenMCMP_GT_I8
+	OpGenMCMP_UGT_I64
+	OpGenMCMP_UGT_I32
+	OpGenMCMP_UGT_I16
+	OpGenMCMP_UGT_I8
+	OpGenMCMP_OGT_F64
+	OpGenMCMP_OGT_F32
 	OpGenMLD_8_U64
 	OpGenMLD_8_I64
 	OpGenMLD_4_U32
@@ -18570,6 +18593,33 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
+		name:   "SELECT_I64",
+		argLen: 3,
+		asm:    genm.ASELECT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{2, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:              "CONST_I1",
+		auxType:           auxBool,
+		argLen:            0,
+		rematerializeable: true,
+		asm:               genm.ACONST,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
 		name:              "CONST_I8",
 		auxType:           auxInt8,
 		argLen:            0,
@@ -18621,6 +18671,160 @@ var opcodeTable = [...]opInfo{
 		name:   "ADD_I64",
 		argLen: 2,
 		asm:    genm.AADD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "AND_I64",
+		argLen: 2,
+		asm:    genm.AAND,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "OR_I64",
+		argLen: 2,
+		asm:    genm.AAND,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "SLR_I64",
+		argLen: 2,
+		asm:    genm.ASLL,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "SLR_I32",
+		argLen: 2,
+		asm:    genm.ASLL,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "SLR_I16",
+		argLen: 2,
+		asm:    genm.ASLL,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "SLR_I8",
+		argLen: 2,
+		asm:    genm.ASLL,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "SLL_I64",
+		argLen: 2,
+		asm:    genm.ASLL,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "SLL_I32",
+		argLen: 2,
+		asm:    genm.ASLL,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "SLL_I16",
+		argLen: 2,
+		asm:    genm.ASLL,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "SLL_I8",
+		argLen: 2,
+		asm:    genm.ASLL,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_NE_I32",
+		argLen: 2,
+		asm:    genm.ACMP_NE,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
@@ -18789,6 +18993,146 @@ var opcodeTable = [...]opInfo{
 		name:   "CMP_OLT_F32",
 		argLen: 2,
 		asm:    genm.ACMP_OLT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_GT_I64",
+		argLen: 2,
+		asm:    genm.ACMP_GT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_GT_I32",
+		argLen: 2,
+		asm:    genm.ACMP_GT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_GT_I16",
+		argLen: 2,
+		asm:    genm.ACMP_GT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_GT_I8",
+		argLen: 2,
+		asm:    genm.ACMP_GT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_UGT_I64",
+		argLen: 2,
+		asm:    genm.ACMP_UGT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_UGT_I32",
+		argLen: 2,
+		asm:    genm.ACMP_UGT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_UGT_I16",
+		argLen: 2,
+		asm:    genm.ACMP_UGT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_UGT_I8",
+		argLen: 2,
+		asm:    genm.ACMP_UGT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_OGT_F64",
+		argLen: 2,
+		asm:    genm.ACMP_OGT,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+				{1, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+			outputs: []outputInfo{
+				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF
+			},
+		},
+	},
+	{
+		name:   "CMP_OGT_F32",
+		argLen: 2,
+		asm:    genm.ACMP_OGT,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 65535}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RA RB RC RD RE RF

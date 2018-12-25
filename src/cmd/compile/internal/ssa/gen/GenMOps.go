@@ -44,11 +44,12 @@ func init() {
 
 	// Common regInfo
 	var (
-		gp01    = regInfo{inputs: nil, 							  outputs: []regMask{gp}}
-		gp11    = regInfo{inputs: []regMask{gp},      outputs: []regMask{gp}}
-		gp21    = regInfo{inputs: []regMask{gp, gp},  outputs: []regMask{gp}}
-		gpload  = regInfo{inputs: []regMask{gp, 0},   outputs: []regMask{gp}}
-		fpload  = regInfo{inputs: []regMask{gp, 0},   outputs: []regMask{fp}}
+		gp01    = regInfo{inputs: nil, 							  		outputs: []regMask{gp}}
+		gp11    = regInfo{inputs: []regMask{gp},      		outputs: []regMask{gp}}
+		gp21    = regInfo{inputs: []regMask{gp, gp},  		outputs: []regMask{gp}}
+		gp31    = regInfo{inputs: []regMask{gp, gp, gp},  outputs: []regMask{gp}}
+		gpload  = regInfo{inputs: []regMask{gp, 0},   		outputs: []regMask{gp}}
+		fpload  = regInfo{inputs: []regMask{gp, 0},   		outputs: []regMask{fp}}
 		gpstore = regInfo{inputs: []regMask{gp, gp, 0}}
 		fpstore = regInfo{inputs: []regMask{gp, fp, 0}}
 	)
@@ -62,46 +63,72 @@ func init() {
 		{name: "LoweredWB", 				 argLength: 3, reg: regInfo{inputs: []regMask{gp, gp}}, aux: "Sym", symEffect: "None"},
 
 		// GenM instructions.
-		{name: "CONST_I8",    asm: "CONST",   reg: gp01,    typ: "Int8",   aux: "Int8",  rematerializeable: true},
-		{name: "CONST_I16",   asm: "CONST",   reg: gp01,    typ: "Int16",  aux: "Int16", rematerializeable: true},
-		{name: "CONST_I32",   asm: "CONST",   reg: gp01,    typ: "Int32",  aux: "Int32", rematerializeable: true},
-		{name: "CONST_I64",   asm: "CONST",   reg: gp01,    typ: "Int64",  aux: "Int64", rematerializeable: true},
+		{name: "SELECT_I64",  asm: "SELECT",  argLength: 3, reg: gp31},
 
-		{name: "ADD_I64", 	  asm: "ADD",     reg: gp21,    typ: "Int64",    argLength: 2},
+		{name: "CONST_I1",		asm: "CONST",   reg: gp01,    typ: "Int1",   aux: "Bool",  rematerializeable: true},
+		{name: "CONST_I8",		asm: "CONST",   reg: gp01,    typ: "Int8",   aux: "Int8",  rematerializeable: true},
+		{name: "CONST_I16",		asm: "CONST",   reg: gp01,    typ: "Int16",  aux: "Int16", rematerializeable: true},
+		{name: "CONST_I32",		asm: "CONST",   reg: gp01,    typ: "Int32",  aux: "Int32", rematerializeable: true},
+		{name: "CONST_I64",		asm: "CONST",   reg: gp01,    typ: "Int64",  aux: "Int64", rematerializeable: true},
 
+		{name: "ADD_I64",			asm: "ADD",     reg: gp21,    typ: "Int64",    argLength: 2},
+		{name: "AND_I64",			asm: "AND",			reg: gp21, 		typ: "Int64",    argLength: 2},
+		{name: "OR_I64",			asm: "AND",			reg: gp21, 		typ: "Int64",    argLength: 2},
 
-		{name: "CMP_NE_I64", 	asm: "CMP_NE",  reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "SLR_I64",			asm: "SLL",     reg: gp21,    typ: "Int64",    argLength: 2},
+		{name: "SLR_I32",			asm: "SLL",     reg: gp21,    typ: "Int32",    argLength: 2},
+		{name: "SLR_I16",			asm: "SLL",     reg: gp21,    typ: "Int16",    argLength: 2},
+		{name: "SLR_I8",			asm: "SLL",     reg: gp21,    typ: "Int8",     argLength: 2},
+
+		{name: "SLL_I64",			asm: "SLL",     reg: gp21,    typ: "Int64",    argLength: 2},
+		{name: "SLL_I32",			asm: "SLL",     reg: gp21,    typ: "Int32",    argLength: 2},
+		{name: "SLL_I16",			asm: "SLL",     reg: gp21,    typ: "Int16",    argLength: 2},
+		{name: "SLL_I8",			asm: "SLL",     reg: gp21,    typ: "Int8",     argLength: 2},
+
+		{name: "CMP_NE_I32",	asm: "CMP_NE",  reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_NE_I64",	asm: "CMP_NE",  reg: gp21,    typ: "Bool",     argLength: 2},
 
 		{name: "CMP_EQ_I8", 	asm: "CMP_EQ",  reg: gp21,    typ: "Bool",     argLength: 2},
 
-		{name: "CMP_LT_I64", 	asm: "CMP_LT",  reg: gp21,    typ: "Bool",     argLength: 2},
-		{name: "CMP_LT_I32", 	asm: "CMP_LT",  reg: gp21,    typ: "Bool",     argLength: 2},
-		{name: "CMP_LT_I16", 	asm: "CMP_LT",  reg: gp21,    typ: "Bool",     argLength: 2},
-		{name: "CMP_LT_I8", 	asm: "CMP_LT",  reg: gp21,    typ: "Bool",     argLength: 2},
-		{name: "CMP_ULT_I64", asm: "CMP_ULT", reg: gp21,    typ: "Bool",     argLength: 2},
-		{name: "CMP_ULT_I32", asm: "CMP_ULT", reg: gp21,    typ: "Bool",     argLength: 2},
-		{name: "CMP_ULT_I16", asm: "CMP_ULT", reg: gp21,    typ: "Bool",     argLength: 2},
-		{name: "CMP_ULT_I8", 	asm: "CMP_ULT", reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_LT_I64",	asm: "CMP_LT",  reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_LT_I32",	asm: "CMP_LT",  reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_LT_I16",	asm: "CMP_LT",  reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_LT_I8",		asm: "CMP_LT",  reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_ULT_I64",	asm: "CMP_ULT", reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_ULT_I32",	asm: "CMP_ULT", reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_ULT_I16",	asm: "CMP_ULT", reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_ULT_I8",	asm: "CMP_ULT", reg: gp21,    typ: "Bool",     argLength: 2},
 		{name: "CMP_OLT_F64",	asm: "CMP_OLT", reg: gp21,    typ: "Bool",     argLength: 2},
-		{name: "CMP_OLT_F32", asm: "CMP_OLT", reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_OLT_F32",	asm: "CMP_OLT", reg: gp21,    typ: "Bool",     argLength: 2},
 
-		{name: "LD_8_U64",  	asm: "LD", 		  reg: gpload,  typ: "UInt64",   argLength: 2, aux: "Int64"},
-		{name: "LD_8_I64",  	asm: "LD", 		  reg: gpload,  typ: "Int64",    argLength: 2, aux: "Int64"},
-		{name: "LD_4_U32",  	asm: "LD", 		  reg: gpload,  typ: "UInt32",   argLength: 2, aux: "Int64"},
-		{name: "LD_4_I32",  	asm: "LD", 		  reg: gpload,  typ: "Int32",    argLength: 2, aux: "Int64"},
-		{name: "LD_2_U16",  	asm: "LD", 		  reg: gpload,  typ: "UInt16",   argLength: 2, aux: "Int64"},
-		{name: "LD_2_I16",  	asm: "LD", 		  reg: gpload,  typ: "Int16",    argLength: 2, aux: "Int64"},
-		{name: "LD_1_U8",   	asm: "LD", 		  reg: gpload,  typ: "UInt8",    argLength: 2, aux: "Int64"},
-		{name: "LD_1_I8",   	asm: "LD", 		  reg: gpload,  typ: "Int8",     argLength: 2, aux: "Int64"},
-		{name: "LD_4_F32", 		asm: "LD", 		  reg: fpload,  typ: "Float32",  argLength: 2, aux: "Int64"},
-		{name: "LD_8_F64", 		asm: "LD", 		  reg: fpload,  typ: "Float64",  argLength: 2, aux: "Int64"},
+		{name: "CMP_GT_I64",	asm: "CMP_GT",  reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_GT_I32",	asm: "CMP_GT",  reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_GT_I16",	asm: "CMP_GT",  reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_GT_I8",		asm: "CMP_GT",  reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_UGT_I64",	asm: "CMP_UGT", reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_UGT_I32",	asm: "CMP_UGT", reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_UGT_I16",	asm: "CMP_UGT", reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_UGT_I8",	asm: "CMP_UGT", reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_OGT_F64",	asm: "CMP_OGT", reg: gp21,    typ: "Bool",     argLength: 2},
+		{name: "CMP_OGT_F32",	asm: "CMP_OGT", reg: gp21,    typ: "Bool",     argLength: 2},
 
-		{name: "ST_8_I", 		  asm: "ST_8", 	  reg: gpstore, typ: "Mem",      argLength: 3, aux: "Int64"},
-		{name: "ST_4_I", 		  asm: "ST_4", 	  reg: gpstore, typ: "Mem",      argLength: 3, aux: "Int64"},
-		{name: "ST_2_I", 		  asm: "ST_2", 	  reg: gpstore, typ: "Mem",      argLength: 3, aux: "Int64"},
-		{name: "ST_1_I", 		  asm: "ST_1", 	  reg: gpstore, typ: "Mem",      argLength: 3, aux: "Int64"},
-		{name: "ST_8_F", 		  asm: "ST_8", 	  reg: fpstore, typ: "Mem",      argLength: 3, aux: "Int64"},
-		{name: "ST_4_F", 		  asm: "ST_4", 	  reg: fpstore, typ: "Mem",      argLength: 3, aux: "Int64"},
+		{name: "LD_8_U64",		asm: "LD", 		  reg: gpload,  typ: "UInt64",   argLength: 2, aux: "Int64"},
+		{name: "LD_8_I64",		asm: "LD", 		  reg: gpload,  typ: "Int64",    argLength: 2, aux: "Int64"},
+		{name: "LD_4_U32",		asm: "LD", 		  reg: gpload,  typ: "UInt32",   argLength: 2, aux: "Int64"},
+		{name: "LD_4_I32",		asm: "LD", 		  reg: gpload,  typ: "Int32",    argLength: 2, aux: "Int64"},
+		{name: "LD_2_U16",		asm: "LD", 		  reg: gpload,  typ: "UInt16",   argLength: 2, aux: "Int64"},
+		{name: "LD_2_I16",		asm: "LD", 		  reg: gpload,  typ: "Int16",    argLength: 2, aux: "Int64"},
+		{name: "LD_1_U8",			asm: "LD", 		  reg: gpload,  typ: "UInt8",    argLength: 2, aux: "Int64"},
+		{name: "LD_1_I8",			asm: "LD", 		  reg: gpload,  typ: "Int8",     argLength: 2, aux: "Int64"},
+		{name: "LD_4_F32",		asm: "LD", 		  reg: fpload,  typ: "Float32",  argLength: 2, aux: "Int64"},
+		{name: "LD_8_F64",		asm: "LD", 		  reg: fpload,  typ: "Float64",  argLength: 2, aux: "Int64"},
+
+		{name: "ST_8_I",			asm: "ST_8", 	  reg: gpstore, typ: "Mem",      argLength: 3, aux: "Int64"},
+		{name: "ST_4_I",			asm: "ST_4", 	  reg: gpstore, typ: "Mem",      argLength: 3, aux: "Int64"},
+		{name: "ST_2_I",			asm: "ST_2", 	  reg: gpstore, typ: "Mem",      argLength: 3, aux: "Int64"},
+		{name: "ST_1_I",			asm: "ST_1", 	  reg: gpstore, typ: "Mem",      argLength: 3, aux: "Int64"},
+		{name: "ST_8_F",			asm: "ST_8", 	  reg: fpstore, typ: "Mem",      argLength: 3, aux: "Int64"},
+		{name: "ST_4_F",			asm: "ST_4", 	  reg: fpstore, typ: "Mem",      argLength: 3, aux: "Int64"},
 	}
 
 	archs = append(archs, arch{

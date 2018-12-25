@@ -9,6 +9,7 @@ import (
 	"cmd/compile/internal/ssa"
 	"cmd/internal/obj"
 	"cmd/internal/obj/genm"
+	"log"
 )
 
 // markMoves marks any MOVXconst ops that need to avoid clobbering flags.
@@ -18,7 +19,7 @@ func ssaMarkMoves(s *gc.SSAGenState, b *ssa.Block) {
 func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 	switch v.Op {
 	case ssa.OpGenMLoweredStaticCall:
-		v.Fatalf("ssaGenValue not implemented: %s\n%s", v.Op, v.Block.Func)
+		log.Printf("not implemented: lowered static call")
 
 	case ssa.OpGenMLoweredInterCall:
 		v.Fatalf("ssaGenValue not implemented: %s\n%s", v.Op, v.Block.Func)
@@ -41,27 +42,33 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg =  genm.REG_T0
 
+	case ssa.OpGenMSELECT_I64:
+		panic("Not implemented")
+
 	case ssa.OpGenMCMP_EQ_I8:
 		ssaGenBinary(s, v)
 
-	case ssa.OpGenMCONST_I64, ssa.OpGenMCONST_I32, ssa.OpGenMCONST_I16, ssa.OpGenMCONST_I8:
+	case ssa.OpGenMCONST_I64, ssa.OpGenMCONST_I32, ssa.OpGenMCONST_I16, ssa.OpGenMCONST_I8, ssa.OpGenMCONST_I1:
 		p := s.Prog(genm.ACONST)
 		p.Ty = getOpType(v)
 		p.From = obj.Addr{Type: obj.TYPE_CONST, Offset: v.AuxInt}
 
-	case ssa.OpGenMADD_I64:
+	case ssa.OpGenMADD_I64, ssa.OpGenMAND_I64, ssa.OpGenMOR_I64:
 		ssaGenBinary(s, v)
 
-	case ssa.OpGenMCMP_NE_I64:
+	case ssa.OpGenMSLL_I64, ssa.OpGenMSLL_I32, ssa.OpGenMSLL_I16, ssa.OpGenMSLL_I8:
 		ssaGenBinary(s, v)
 
-	case ssa.OpGenMCMP_LT_I64, ssa.OpGenMCMP_LT_I32, ssa.OpGenMCMP_LT_I16, ssa.OpGenMCMP_LT_I8:
+	case ssa.OpGenMSLR_I64, ssa.OpGenMSLR_I32, ssa.OpGenMSLR_I16, ssa.OpGenMSLR_I8:
 		ssaGenBinary(s, v)
 
-	case ssa.OpGenMCMP_ULT_I64, ssa.OpGenMCMP_ULT_I32, ssa.OpGenMCMP_ULT_I16, ssa.OpGenMCMP_ULT_I8:
+	case ssa.OpGenMCMP_NE_I64, ssa.OpGenMCMP_NE_I32:
 		ssaGenBinary(s, v)
 
-	case ssa.OpGenMCMP_OLT_F64, ssa.OpGenMCMP_OLT_F32:
+	case ssa.OpGenMCMP_LT_I64, ssa.OpGenMCMP_LT_I32, ssa.OpGenMCMP_LT_I16, ssa.OpGenMCMP_LT_I8, ssa.OpGenMCMP_ULT_I64, ssa.OpGenMCMP_ULT_I32, ssa.OpGenMCMP_ULT_I16, ssa.OpGenMCMP_ULT_I8, ssa.OpGenMCMP_OLT_F64, ssa.OpGenMCMP_OLT_F32:
+		ssaGenBinary(s, v)
+
+	case ssa.OpGenMCMP_GT_I64, ssa.OpGenMCMP_GT_I32, ssa.OpGenMCMP_GT_I16, ssa.OpGenMCMP_GT_I8, ssa.OpGenMCMP_UGT_I64, ssa.OpGenMCMP_UGT_I32, ssa.OpGenMCMP_UGT_I16, ssa.OpGenMCMP_UGT_I8, ssa.OpGenMCMP_OGT_F64, ssa.OpGenMCMP_OGT_F32:
 		ssaGenBinary(s, v)
 
 	case ssa.OpGenMLD_8_U64, ssa.OpGenMLD_8_I64, ssa.OpGenMLD_4_U32, ssa.OpGenMLD_4_I32, ssa.OpGenMLD_2_U16, ssa.OpGenMLD_2_I16, ssa.OpGenMLD_1_U8, ssa.OpGenMLD_1_I8, ssa.OpGenMLD_4_F32, ssa.OpGenMLD_8_F64:
@@ -112,15 +119,21 @@ func ssaGenBlock(s *gc.SSAGenState, b, next *ssa.Block) {
 	switch b.Kind {
 	case ssa.BlockPlain:
 		panic("BlockPlain")
+
 	case ssa.BlockIf:
-		panic("BlockIf")
+		log.Printf("BlockIf: not implemented")
+		s.Prog(genm.AJT)
+
 	case ssa.BlockRet:
-		b.Func.Fatalf("%s\n", b.Func)
-		panic("BlockRet")
+		log.Printf("BlockRet: not implemented")
+		s.Prog(genm.ARET)
+
 	case ssa.BlockRetJmp:
 		panic("BlockRetJmp")
+
 	case ssa.BlockExit:
-		panic("BlockExit")
+		s.Prog(obj.AUNDEF)
+
 	case ssa.BlockDefer:
 		panic("BlockDefer")
 	default:
