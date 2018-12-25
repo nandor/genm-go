@@ -15,6 +15,7 @@ const GoarchArm64 = 0
 const GoarchArm64be = 0
 const GoarchPpc64 = 0
 const GoarchPpc64le = 0
+const GoarchGenm = 0
 const GoarchMips = 0
 const GoarchMipsle = 0
 const GoarchMips64 = 0

@@ -11,6 +11,7 @@ const (
 	ARM
 	ARM64
 	I386
+	GENM
 	MIPS
 	MIPS64
 	PPC64
