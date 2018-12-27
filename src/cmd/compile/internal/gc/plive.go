@@ -424,7 +424,7 @@ func (lv *Liveness) regEffects(v *ssa.Value) (uevar, kill liveRegMask) {
 		for _, reg := range regs[:nreg] {
 			if reg.GCNum() == -1 {
 				if ptrOnly {
-					v.Fatalf("pointer in non-pointer register %v", reg)
+					v.Fatalf("pointer in non-pointer register %v\n%s", reg, v.Block.Func)
 				} else {
 					continue
 				}

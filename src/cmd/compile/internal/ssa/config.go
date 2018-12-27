@@ -337,6 +337,8 @@ func NewConfig(arch string, types Types, ctxt *obj.Link, optimize bool) *Config 
     c.FPReg = framepointerRegGenM
     c.LinkReg = linkRegGenM
     c.hasGReg = false
+		c.useAvg = false
+		c.useHmul = false
 	default:
 		ctxt.Diag("arch %s not implemented", arch)
 	}

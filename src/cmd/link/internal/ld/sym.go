@@ -137,6 +137,9 @@ func (ctxt *Link) computeTLSOffset() {
 
 		case sys.ARM64:
 			ctxt.Tlsoffset = 0 // dummy value, not needed
+
+		case sys.GenM:
+			ctxt.Tlsoffset = 0x30
 		}
 	}
 

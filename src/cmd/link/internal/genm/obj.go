@@ -10,5 +10,25 @@ import (
 )
 
 func Init() (*sys.Arch, ld.Arch) {
-	panic("Init")
+	theArch := ld.Arch{
+		Funcalign: 16,
+		Maxalign:  32,
+		Minalign:  1,
+
+		Archinit:      archinit,
+		AssignAddress: assignAddress,
+		Asmb:          asmb,
+		Gentext:       gentext,
+	}
+
+	return sys.ArchGenM, theArch
+}
+
+func archinit(ctxt *ld.Link) {
+	if *ld.FlagRound == -1 {
+		*ld.FlagRound = 4096
+	}
+	if *ld.FlagTextAddr == -1 {
+		*ld.FlagTextAddr = 0
+	}
 }

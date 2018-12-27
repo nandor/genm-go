@@ -5,6 +5,7 @@
 // Lowering calls
 (StaticCall [argwid] {target} mem) -> (LoweredStaticCall [argwid] {target} mem)
 (InterCall [argwid] entry mem) -> (LoweredInterCall [argwid] entry mem)
+(ClosureCall [argwid] entry closure mem) -> (LoweredClosureCall [argwid] entry closure mem)
 (WB {fn} destptr srcptr mem) -> (LoweredWB {fn} destptr srcptr mem)
 
 // Lowering misc
@@ -12,61 +13,147 @@
 (Addr {sym} base) -> (LoweredAddr {sym} base)
 (LocalAddr {sym} base _) -> (LoweredAddr {sym} base)
 (NilCheck ptr mem) -> (LoweredNilCheck ptr mem)
-(IsInBounds idx len) -> (CMP_LT_I64 idx len)
-(IsSliceInBounds idx len) -> (CMP_ULT_I64 idx len)
+(IsInBounds idx len) -> (CMP_LT idx len)
+(IsSliceInBounds idx len) -> (CMP_ULT idx len)
+(IsNonNil p) -> (CMP_NE p (CONST_I64 [0]))
+(GetG mem) -> (LoweredGetG mem)
+(GetClosurePtr) -> (LoweredGetClosurePtr)
+(GetCallerPC) -> (LoweredGetCallerPC)
+(GetCallerSP) -> (LoweredGetCallerSP)
+
+// Lowering slice mask
+(Slicemask <t> x) && t.Size() == 8 -> (SAR_I64 (NEG_I64 x) (CONST_I64 [63]))
+
+// Lowering moves
+(Move [8] dst src mem) -> (ST_8 dst (LD_8_I64 src mem) mem)
+(Move [s] dst src mem) -> (LoweredMove [s] dst src mem)
+
+// Lowering zeroing.
+(Zero [4] dst mem) -> (ST_4 dst (CONST_I32 [0]) mem)
+(Zero [s] dst mem) -> (LoweredZero [s] dst mem)
 
 // Lowering constants
 (ConstNil) -> (CONST_I64 [0])
 (ConstBool [val]) -> (CONST_I1  [val])
-(Const8  [val]) -> (CONST_I8  [val])
+(Const8 [val]) -> (CONST_I8  [val])
 (Const16 [val]) -> (CONST_I16 [val])
 (Const32 [val]) -> (CONST_I32 [val])
 (Const64 [val]) -> (CONST_I64 [val])
+(Const32F [val]) -> (CONST_F32 [val])
+(Const64F [val]) -> (CONST_F64 [val])
 
 // Lowering arithmetic
-(Add64 x y) -> (ADD_I64 x y)
-(And64 x y) -> (AND_I64 x y)
-(Or64  x y) -> (OR_I64  x y)
+(AddPtr x y) -> (ADD_I64 x y)
+
+(Add(64|32|16|8)    x y) -> (ADD_I(64|32|16|8)  x y)
+(And(64|32|16|8|B)  x y) -> (AND_I(64|32|16|8|1) x y)
+(Or(64|32|16|8|B)   x y) -> (OR_I(64|32|16|8|1) x y)
+(Xor(64|32|16|8)    x y) -> (XOR_I(64|32|16|8) x y)
+(Sub(64|32|16|8)    x y) -> (SUB_I(64|32|16|8) x y)
+
+(Mul(8|16|32|64) x y) -> (MUL_I(8|16|32|64) x y)
+(Mul64F x y) -> (MUL_F64 x y)
+
+(Mod(32|64)u x y) -> (MOD_U(32|64) x y)
+(Mod(32|64) x y) -> (MOD_I(32|64) x y)
+
+(Div(64|32) x y) -> (DIV_I(64|32) x y)
+(Div(64|32|8)u x y) -> (DIV_U(64|32|8) x y)
+
+(Div64F x y) -> (DIV_F64 x y)
+(Add64F x y) -> (ADD_F64 x y)
+(Sub(32|64)F x y) -> (SUB_F(32|64) x y)
+
+(Neg(64|32) x) -> (NEG_I(64|32) x)
+(Neg(64|32)F x) -> (NEG_F(64|32) x)
+(Not x) -> (NOT_I1 x)
+
+(Com(64|32|16|8) x) -> (XOR_I(64|32|16|8) x (CONST_I64 [-1]))
+
+// Lowering ext and truncate
+(ZeroExt(32|16|8)to64 x)  -> (ZEXT_I64 x)
+(ZeroExt(16|8)to32 x)     -> (ZEXT_I32 x)
+(ZeroExt8to16 x)          -> (ZEXT_I16 x)
+
+(SignExt(32|16|8)to64 x)  -> (SEXT_I64 x)
+(SignExt(16|8)to32 x)     -> (SEXT_I32 x)
+
+(Trunc64to(32|16|8) x) -> (TRUNC_I(32|16|8) x)
+(Trunc32to(16|8) x) -> (TRUNC_I(16|8) x)
+(Trunc16to8 x) -> (TRUNC_I8 x)
+
+(Cvt64to64F x) -> (SEXT_F64 x)
+(Cvt32to64F x) -> (SEXT_F64 x)
+
+(Cvt32Fto64F x) -> (FEXT_F64 x)
+(Cvt64Fto32F x) -> (TRUNC_F32 x)
+(Cvt64Fto32 x) -> (TRUNC_I32 x)
+(Cvt32Fto64 x) -> (TRUNC_I64 x)
+(Cvt64Fto64 x) -> (TRUNC_I64 x)
 
 // Lowering shifts
-(Rsh64Ux64 x y) -> (SELECT_I64 (SLR_I64 x y) (CONST_I64 [0]) (CMP_ULT_I64 y (CONST_I64 [64])))
-(Rsh64Ux32 x y) -> (SELECT_I64 (SLR_I64 x y) (CONST_I64 [0]) (CMP_ULT_I32 y (CONST_I32 [32])))
-(Rsh64Ux16 x y) -> (SELECT_I64 (SLR_I64 x y) (CONST_I64 [0]) (CMP_ULT_I16 y (CONST_I16 [32])))
-(Rsh64Ux8  x y) -> (SELECT_I64 (SLR_I64 x y) (CONST_I64 [0]) (CMP_ULT_I8  y (CONST_I8  [32])))
+(Rsh64Ux64 x y) -> (SELECT_I64 (SLR_I64 x y) (CONST_I64 [0]) (CMP_ULT y (CONST_I64 [64])))
+(Rsh64Ux32 x y) -> (SELECT_I64 (SLR_I64 x y) (CONST_I64 [0]) (CMP_ULT y (CONST_I32 [32])))
+(Rsh64Ux16 x y) -> (SELECT_I64 (SLR_I64 x y) (CONST_I64 [0]) (CMP_ULT y (CONST_I16 [16])))
+(Rsh64Ux8  x y) -> (SELECT_I64 (SLR_I64 x y) (CONST_I64 [0]) (CMP_ULT y (CONST_I8  [8])))
+(Rsh32Ux64 x y) -> (SELECT_I32 (SLR_I32 x y) (CONST_I32 [0]) (CMP_ULT y (CONST_I64 [64])))
+(Rsh32Ux32 x y) -> (SELECT_I32 (SLR_I32 x y) (CONST_I32 [0]) (CMP_ULT y (CONST_I32 [32])))
+(Rsh32Ux16 x y) -> (SELECT_I32 (SLR_I32 x y) (CONST_I32 [0]) (CMP_ULT y (CONST_I16 [16])))
+(Rsh32Ux8  x y) -> (SELECT_I32 (SLR_I32 x y) (CONST_I32 [0]) (CMP_ULT y (CONST_I8  [8])))
+(Rsh8Ux64 x y)  -> (SELECT_I8  (SLR_I8  x y) (CONST_I8  [0]) (CMP_ULT y (CONST_I64 [64])))
+(Rsh8Ux32 x y)  -> (SELECT_I8  (SLR_I8  x y) (CONST_I8  [0]) (CMP_ULT y (CONST_I32 [32])))
+(Rsh8Ux16 x y)  -> (SELECT_I8  (SLR_I8  x y) (CONST_I8  [0]) (CMP_ULT y (CONST_I16 [16])))
+(Rsh8Ux8  x y)  -> (SELECT_I8  (SLR_I8  x y) (CONST_I8  [0]) (CMP_ULT y (CONST_I8  [8])))
 
-(Lsh64x64 x y) -> (SELECT_I64 (SLL_I64 x y) (CONST_I64 [0]) (CMP_ULT_I64 y (CONST_I64 [64])))
-(Lsh64x32 x y) -> (SELECT_I64 (SLL_I64 x y) (CONST_I64 [0]) (CMP_ULT_I32 y (CONST_I32 [32])))
-(Lsh64x16 x y) -> (SELECT_I64 (SLL_I64 x y) (CONST_I64 [0]) (CMP_ULT_I16 y (CONST_I16 [32])))
-(Lsh64x8  x y) -> (SELECT_I64 (SLL_I64 x y) (CONST_I64 [0]) (CMP_ULT_I8  y (CONST_I8  [32])))
+(Rsh64x64 x y) -> (SAR_I64 x (SELECT_I64 y (CONST_I64 [63]) (CMP_ULT y (CONST_I64 [64]))))
+(Rsh32x64 x y) -> (SAR_I32 x (SELECT_I64 y (CONST_I64 [31]) (CMP_ULT y (CONST_I64 [32]))))
+(Rsh16x64 x y) -> (SAR_I16 x (SELECT_I64 y (CONST_I64 [15]) (CMP_ULT y (CONST_I64 [16]))))
+(Rsh8x64 x y)  -> (SAR_I8  x (SELECT_I64 y (CONST_I64 [7])  (CMP_ULT y (CONST_I64 [8]))))
 
+(Lsh64x64 x y) -> (SELECT_I64 (SLL_I64 x y) (CONST_I64 [0]) (CMP_ULT y (CONST_I64 [64])))
+(Lsh64x32 x y) -> (SELECT_I64 (SLL_I64 x y) (CONST_I64 [0]) (CMP_ULT y (CONST_I32 [32])))
+(Lsh64x16 x y) -> (SELECT_I64 (SLL_I64 x y) (CONST_I64 [0]) (CMP_ULT y (CONST_I16 [32])))
+(Lsh64x8  x y) -> (SELECT_I64 (SLL_I64 x y) (CONST_I64 [0]) (CMP_ULT y (CONST_I8  [32])))
+(Lsh32x64 x y) -> (SELECT_I32 (SLL_I32 x y) (CONST_I32 [0]) (CMP_ULT y (CONST_I64 [64])))
+(Lsh32x32 x y) -> (SELECT_I32 (SLL_I32 x y) (CONST_I32 [0]) (CMP_ULT y (CONST_I32 [32])))
+(Lsh32x16 x y) -> (SELECT_I32 (SLL_I32 x y) (CONST_I32 [0]) (CMP_ULT y (CONST_I16 [32])))
+(Lsh32x8  x y) -> (SELECT_I32 (SLL_I32 x y) (CONST_I32 [0]) (CMP_ULT y (CONST_I8  [32])))
+(Lsh16x64 x y) -> (SELECT_I16 (SLL_I16 x y) (CONST_I16 [0]) (CMP_ULT y (CONST_I64 [64])))
+(Lsh16x32 x y) -> (SELECT_I16 (SLL_I16 x y) (CONST_I16 [0]) (CMP_ULT y (CONST_I32 [32])))
+(Lsh16x16 x y) -> (SELECT_I16 (SLL_I16 x y) (CONST_I16 [0]) (CMP_ULT y (CONST_I16 [32])))
+(Lsh16x8  x y) -> (SELECT_I16 (SLL_I16 x y) (CONST_I16 [0]) (CMP_ULT y (CONST_I8  [32])))
+(Lsh8x64 x y)  -> (SELECT_I8  (SLL_I8  x y) (CONST_I8  [0]) (CMP_ULT y (CONST_I64 [64])))
+(Lsh8x32 x y)  -> (SELECT_I8  (SLL_I8  x y) (CONST_I8  [0]) (CMP_ULT y (CONST_I32 [32])))
+(Lsh8x16 x y)  -> (SELECT_I8  (SLL_I8  x y) (CONST_I8  [0]) (CMP_ULT y (CONST_I16 [32])))
+(Lsh8x8  x y)  -> (SELECT_I8  (SLL_I8  x y) (CONST_I8  [0]) (CMP_ULT y (CONST_I8  [32])))
 
 // Lowering comparisons
-(Neq32 x y) -> (CMP_NE_I32 x y)
-(Neq64 x y) -> (CMP_NE_I64 x y)
+(Neq(64|32|16|8) x y)      -> (CMP_NE x y)
+(Neq(32|64)F x y)          -> (CMP_ONE x y)
+(NeqB x y)                 -> (CMP_NE x y)
 
-(Eq8 x y) -> (CMP_EQ_I8 x y)
+(Eq(64|32|16|8) x y)       -> (CMP_EQ x y)
+(Eq(64|32)F x y)           -> (CMP_EQ x y)
+(EqB x y)                  -> (CMP_EQ x y)
 
-(Less64  x y) -> (CMP_LT_I64  x y)
-(Less32  x y) -> (CMP_LT_I32  x y)
-(Less16  x y) -> (CMP_LT_I16  x y)
-(Less8   x y) -> (CMP_LT_I8   x y)
-(Less64U x y) -> (CMP_ULT_I64 x y)
-(Less32U x y) -> (CMP_ULT_I32 x y)
-(Less16U x y) -> (CMP_ULT_I16 x y)
-(Less8U  x y) -> (CMP_ULT_I8  x y)
-(Less64F x y) -> (CMP_OLT_F64 x y)
-(Less32F x y) -> (CMP_OLT_F32 x y)
+(Geq(64|32|16|8) x y)      -> (CMP_GE  x y)
+(Geq(64|32|16|8)U x y)     -> (CMP_UGE x y)
+(Geq(64|32)F x y)          -> (CMP_OGE x y)
 
-(Greater64  x y) -> (CMP_GT_I64  x y)
-(Greater32  x y) -> (CMP_GT_I32  x y)
-(Greater16  x y) -> (CMP_GT_I16  x y)
-(Greater8   x y) -> (CMP_GT_I8   x y)
-(Greater64U x y) -> (CMP_UGT_I64 x y)
-(Greater32U x y) -> (CMP_UGT_I32 x y)
-(Greater16U x y) -> (CMP_UGT_I16 x y)
-(Greater8U  x y) -> (CMP_UGT_I8  x y)
-(Greater64F x y) -> (CMP_OGT_F64 x y)
-(Greater32F x y) -> (CMP_OGT_F32 x y)
+(Leq(64|32|16|8) x y)      -> (CMP_LE  x y)
+(Leq(64|32|16|8)U x y)     -> (CMP_ULE x y)
+(Leq(64|32)F x y)          -> (CMP_OLE x y)
+
+(Less(64|32|16|8) x y)     -> (CMP_LT  x y)
+(Less(64|32|16|8)U x y)    -> (CMP_ULT x y)
+(Less(64|32)F x y)         -> (CMP_OLT x y)
+
+(Greater(64|32|16|8) x y)  -> (CMP_GT  x y)
+(Greater(64|32|16|8)U x y) -> (CMP_UGT x y)
+(Greater(64|32)F x y)      -> (CMP_OGT x y)
+
+(EqPtr x y)                -> (CMP_EQ x y)
+(NeqPtr x y)               -> (CMP_NE x y)
 
 // Lowering loads
 (Load <t> ptr mem) && is32BitFloat(t) -> (LD_4_F32 ptr mem)
@@ -81,9 +168,9 @@
 (Load <t> ptr mem) && t.Size() == 1 &&  t.IsSigned() -> (LD_1_I8  ptr mem)
 
 // Lowering stores
-(Store {t} ptr val mem) && is64BitFloat(t.(*types.Type)) -> (ST_8_F ptr val mem)
-(Store {t} ptr val mem) && is32BitFloat(t.(*types.Type)) -> (ST_4_F ptr val mem)
-(Store {t} ptr val mem) && t.(*types.Type).Size() == 8   -> (ST_8_I ptr val mem)
-(Store {t} ptr val mem) && t.(*types.Type).Size() == 4   -> (ST_4_I ptr val mem)
-(Store {t} ptr val mem) && t.(*types.Type).Size() == 2   -> (ST_2_I ptr val mem)
-(Store {t} ptr val mem) && t.(*types.Type).Size() == 1   -> (ST_1_I ptr val mem)
+(Store {t} ptr val mem) && is64BitFloat(t.(*types.Type)) -> (ST_8 ptr val mem)
+(Store {t} ptr val mem) && is32BitFloat(t.(*types.Type)) -> (ST_4 ptr val mem)
+(Store {t} ptr val mem) && t.(*types.Type).Size() == 8   -> (ST_8 ptr val mem)
+(Store {t} ptr val mem) && t.(*types.Type).Size() == 4   -> (ST_4 ptr val mem)
+(Store {t} ptr val mem) && t.(*types.Type).Size() == 2   -> (ST_2 ptr val mem)
+(Store {t} ptr val mem) && t.(*types.Type).Size() == 1   -> (ST_1 ptr val mem)
